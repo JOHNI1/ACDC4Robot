@@ -8,6 +8,7 @@ from . import urdf as URDF
 from . import sdf as SDF
 from . import mjcf as MJCF
 import adsk, adsk.core, adsk.fusion
+from ..lib import fusion360utils as futil
 
 def write_sdf(link_list: list[Link], joint_list: list[Joint], dir: str, robot_name: str):
     """
@@ -57,14 +58,23 @@ def write_sdf_config(dir: str, model_name: str, author_name: str, description: s
     ET.indent(config_tree, space="    ", level=0)
     config_file = dir + "/model.config"
     config_tree.write(config_file, encoding="utf-8", xml_declaration=True) 
-    
+
 def write_urdf(link_list: list[Link], joint_list: list[Joint], dir: str, robot_name: str):
     """
     Write all the joint and link elements to the urdf file
     """
     robot_ele = Element("robot")
-    robot_ele.attrib = {"name": robot_name}
+    robot_ele.attrib = {"name": robot_name, "xmlns:xacro": "http://www.ros.org/wiki/xacro"}
     urdf_tree = ET.ElementTree(robot_ele)
+
+    mesh_folder_path = Element("xacro:property")
+    mesh_folder_path.attrib = {"name": "mesh_folder_path", "value": "package://drone"}
+    robot_ele.append(mesh_folder_path)
+    
+    gz_sim_joint_state_publisher_system = Element("plugin")
+    gz_sim_joint_state_publisher_system.attrib = {"filename": "gz-sim-joint-state-publisher-system", "name": "gz::sim::systems::JointStatePublisher"}
+    robot_ele.append(gz_sim_joint_state_publisher_system)
+    
 
     for link in link_list:
         # link_ele = link.get_link_urdf_element()
@@ -76,10 +86,24 @@ def write_urdf(link_list: list[Link], joint_list: list[Joint], dir: str, robot_n
         joint_ele = URDF.get_joint_element(joint)
         robot_ele.append(joint_ele)
 
+        if "spring" in joint.name:
+            # futil.log(f'{joint.name} says hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii')
+            gazebo_ele = Element("gazebo")
+            gazebo_ele.attrib = {"reference": joint.name}
+            springStiffness = SubElement(gazebo_ele, "springStiffness")
+            robot_ele.append(gazebo_ele)
+
+        # if "rotor" in joint.name:
+        #     gazebo_ele = Element("gazebo")
+        #     gazebo_ele.attrib = {"reference": joint.name}
+        #     robot_ele.append()
+
+
+    
     # set indent to pretty the xml output
     ET.indent(urdf_tree, space="    ", level=0)
 
-    urdf_file = dir + "/" + robot_name + ".urdf"
+    urdf_file = dir + "/robot.urdf.xacro"
     urdf_tree.write(urdf_file, encoding="utf-8", xml_declaration=True)
 
 def write_hello_pybullet(rdf_type: str, robot_name: str, save_dir: str):

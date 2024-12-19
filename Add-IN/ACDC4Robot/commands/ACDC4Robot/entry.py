@@ -80,28 +80,38 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
     # create command inputs for model.config
     inputs = args.command.commandInputs
 
-    # create a drop down command input to choose robot description format
-    rdf_input = inputs.addDropDownCommandInput("robot_description_format", "Robot Description Format", adsk.core.DropDownStyles.LabeledIconDropDownStyle)
-    rdf_items = rdf_input.listItems
-    rdf_items.add("None", True)
-    rdf_items.add("URDF", False)
-    rdf_items.add("SDFormat", False)
-    rdf_items.add("MJCF", False)
+    # Add a description field to instruct the user.
+    instruction_text = (
+        "Welcome to fork of ACDC4Robot for building drones!\n"
+        "This tool allows you to export your Autodesk Fusion 360 design model to a xacro file for Gazebo physics simulator.\n"
+        "Except of creating the links and joints, it also has a feature of adding neccessary plugins\n"
+        "The path to the mesh folder of the stl files should be configured by the xacro:property mesh_folder_path.\n"
+    )
+    inputs.addTextBoxCommandInput("instruction_text", "Instructions", instruction_text, 4, True)
 
-    # create a drop down command input to choose simulation environment
-    sim_env_input = inputs.addDropDownCommandInput("simulation_env", "Simulation Environment", adsk.core.DropDownStyles.LabeledIconDropDownStyle)
-    sim_env_items = sim_env_input.listItems
-    sim_env_items.add("None", True)
-    sim_env_items.add("Gazebo", False)
-    sim_env_items.add("PyBullet", False)
-    sim_env_items.add("MuJoCo", False)
-    sim_env_input.isVisible = False
 
-    # create string value input for sdf info
-    sdf_author_input = inputs.addStringValueInput("SDF_Author_name", "Author Name", "ACDC4Robot")
-    sdf_author_input.isVisible = False
-    sdf_description_input = inputs.addTextBoxCommandInput("SDF_Description", "Description", "Description about the robot model", 3, False)
-    sdf_description_input.isVisible = False
+    # # create a drop down command input to choose robot description format
+    # rdf_input = inputs.addDropDownCommandInput("robot_description_format", "Robot Description Format", adsk.core.DropDownStyles.LabeledIconDropDownStyle)
+    # rdf_items = rdf_input.listItems
+    # rdf_items.add("None", True)
+    # rdf_items.add("URDF", False)
+    # rdf_items.add("SDFormat", False)
+    # rdf_items.add("MJCF", False)
+
+    # # create a drop down command input to choose simulation environment
+    # sim_env_input = inputs.addDropDownCommandInput("simulation_env", "Simulation Environment", adsk.core.DropDownStyles.LabeledIconDropDownStyle)
+    # sim_env_items = sim_env_input.listItems
+    # sim_env_items.add("None", True)
+    # sim_env_items.add("Gazebo", False)
+    # sim_env_items.add("PyBullet", False)
+    # sim_env_items.add("MuJoCo", False)
+    # sim_env_input.isVisible = False
+
+    # # create string value input for sdf info
+    # sdf_author_input = inputs.addStringValueInput("SDF_Author_name", "Author Name", "ACDC4Robot")
+    # sdf_author_input.isVisible = False
+    # sdf_description_input = inputs.addTextBoxCommandInput("SDF_Description", "Description", "Description about the robot model", 3, False)
+    # sdf_description_input.isVisible = False
 
     # # https://help.autodesk.com/view/fusion360/ENU/?contextId=CommandInputs
     # inputs = args.command.commandInputs
@@ -130,16 +140,16 @@ def command_execute(args: adsk.core.CommandEventArgs):
     # General logging for debug.
     futil.log(f'{CMD_NAME} Command Execute Event')
 
-    # get the command inputs value
-    inputs = args.command.commandInputs
-    sdf_input: adsk.core.DropDownCommandInput = inputs.itemById("robot_description_format")
-    sim_env_input: adsk.core.DropDownCommandInput = inputs.itemById("simulation_env")
-    name_input: adsk.core.StringValueCommandInput = inputs.itemById("SDF_Author_name")
-    text_input: adsk.core.TextBoxCommandInput = inputs.itemById("SDF_Description")
-    constants.set_rdf(sdf_input.selectedItem.name)
-    constants.set_sim_env(sim_env_input.selectedItem.name)
-    constants.set_author_name(name_input.value)
-    constants.set_model_description(text_input.text)
+    # # get the command inputs value
+    # inputs = args.command.commandInputs
+    # sdf_input: adsk.core.DropDownCommandInput = inputs.itemById("robot_description_format")
+    # sim_env_input: adsk.core.DropDownCommandInput = inputs.itemById("simulation_env")
+    # name_input: adsk.core.StringValueCommandInput = inputs.itemById("SDF_Author_name")
+    # text_input: adsk.core.TextBoxCommandInput = inputs.itemById("SDF_Description")
+    # constants.set_rdf(sdf_input.selectedItem.name)
+    # constants.set_sim_env(sim_env_input.selectedItem.name)
+    # constants.set_author_name(name_input.value)
+    # constants.set_model_description(text_input.text)
 
     acdc4robot.run()
     # TODO ******************************** Your code here ********************************
@@ -176,26 +186,27 @@ def command_input_changed(args: adsk.core.InputChangedEventArgs):
     sdf_description = inputs.itemById("SDF_Description")
     # inputs = args.inputs
 
-    if changed_input.id == "robot_description_format":
-        if changed_input.selectedItem.name == "None":
-            sim_env.isVisible = False
+    sim_env.isVisible = False
+    # if changed_input.id == "robot_description_format":
+    #     if changed_input.selectedItem.name == "None":
+    #         sim_env.isVisible = False
             
-        elif changed_input.selectedItem.name == "URDF":
-            sim_env.isVisible = True
+    #     elif changed_input.selectedItem.name == "URDF":
+    #         sim_env.isVisible = True
             
-        elif changed_input.selectedItem.name == "SDFormat":
-            sim_env.isVisible = True
+    #     elif changed_input.selectedItem.name == "SDFormat":
+    #         sim_env.isVisible = True
         
-        elif changed_input.selectedItem.name == "MJCF":
-            sim_env.isVisible = True
+    #     elif changed_input.selectedItem.name == "MJCF":
+    #         sim_env.isVisible = True
             
 
-    if (rdf.selectedItem.name == "SDFormat") and (sim_env.selectedItem.name == "Gazebo"):
-        sdf_author.isVisible = True
-        sdf_description.isVisible = True
-    else:
-        sdf_author.isVisible = False
-        sdf_description.isVisible = False
+    # if (rdf.selectedItem.name == "SDFormat") and (sim_env.selectedItem.name == "Gazebo"):
+    #     sdf_author.isVisible = True
+    #     sdf_description.isVisible = True
+    # else:
+    #     sdf_author.isVisible = False
+    #     sdf_description.isVisible = False
 
     # General logging for debug.
     futil.log(f'{CMD_NAME} Input Changed Event fired from a change to {changed_input.id}')
