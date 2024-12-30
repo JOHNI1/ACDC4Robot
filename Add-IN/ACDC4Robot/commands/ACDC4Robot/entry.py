@@ -8,6 +8,32 @@ app = adsk.core.Application.get()
 ui = app.userInterface
 
 
+# File to store the last modification code
+LAST_MODIFICATION_CODE_FILE = os.path.join(os.path.dirname(__file__), 'last_modification_code.txt')
+
+
+# Default example code
+DEFAULT_EXAMPLE_CODE = (
+    """#modify robot_ele (class Element from xml.etree.ElementTree). Its the api for you!
+for _ in range(10):
+    futil.log('hello')
+
+"""
+)
+
+# Function to load the last modification code from the file
+def load_last_modification_code():
+    if os.path.exists(LAST_MODIFICATION_CODE_FILE):
+        with open(LAST_MODIFICATION_CODE_FILE, 'r') as file:
+            return file.read()
+    return DEFAULT_EXAMPLE_CODE  # Return default if file doesn't exist
+
+# Function to save the modification code to the file
+def save_modification_code(code):
+    with open(LAST_MODIFICATION_CODE_FILE, 'w') as file:
+        file.write(code)
+
+
 # TODO *** Specify the command identity information. ***
 CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_ACDC4Robot'
 CMD_NAME = 'ACDC4Robot'
@@ -70,7 +96,6 @@ def stop():
     if command_definition:
         command_definition.deleteMe()
 
-
 # Function that is called when a user clicks the corresponding button in the UI.
 # This defines the contents of the command dialog and connects to the command related events.
 def command_created(args: adsk.core.CommandCreatedEventArgs):
@@ -82,57 +107,23 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
 
     # Add a description field to instruct the user.
     instruction_text = (
-        "Welcome to fork of ACDC4Robot for building drones!\n"
+        "Welcome to fork of ACDC4Robot for building advanced robots!\n"
         "This tool allows you to export your Autodesk Fusion 360 design model to a xacro file for Gazebo physics simulator.\n"
-        "Except of creating the links and joints, it also has a feature of adding neccessary plugins\n"
-        "The path to the mesh folder of the stl files should be configured by the xacro:property mesh_folder_path.\n"
+        "Except of creating the links and joints from the model, you can add your own modification code to the link or joints or even extra links and joints using python exec function.\n"
+        "The path to the mesh folder of the stl files should be configured by the xacro:property mesh_folder_path."
     )
-    inputs.addTextBoxCommandInput("instruction_text", "Instructions", instruction_text, 4, True)
+    inputs.addTextBoxCommandInput("instruction_text", "Instructions", instruction_text, len(instruction_text.splitlines()), True)
 
+	
+    # Load the last modification code or use the default
+    last_modification_code = load_last_modification_code()
+    inputs.addTextBoxCommandInput("modification_code", "Modification code:", last_modification_code, 40, False)
 
-    # # create a drop down command input to choose robot description format
-    # rdf_input = inputs.addDropDownCommandInput("robot_description_format", "Robot Description Format", adsk.core.DropDownStyles.LabeledIconDropDownStyle)
-    # rdf_items = rdf_input.listItems
-    # rdf_items.add("None", True)
-    # rdf_items.add("URDF", False)
-    # rdf_items.add("SDFormat", False)
-    # rdf_items.add("MJCF", False)
-
-    # # create a drop down command input to choose simulation environment
-    # sim_env_input = inputs.addDropDownCommandInput("simulation_env", "Simulation Environment", adsk.core.DropDownStyles.LabeledIconDropDownStyle)
-    # sim_env_items = sim_env_input.listItems
-    # sim_env_items.add("None", True)
-    # sim_env_items.add("Gazebo", False)
-    # sim_env_items.add("PyBullet", False)
-    # sim_env_items.add("MuJoCo", False)
-    # sim_env_input.isVisible = False
-
-    # # create string value input for sdf info
-    # sdf_author_input = inputs.addStringValueInput("SDF_Author_name", "Author Name", "ACDC4Robot")
-    # sdf_author_input.isVisible = False
-    # sdf_description_input = inputs.addTextBoxCommandInput("SDF_Description", "Description", "Description about the robot model", 3, False)
-    # sdf_description_input.isVisible = False
-
-    # # https://help.autodesk.com/view/fusion360/ENU/?contextId=CommandInputs
-    # inputs = args.command.commandInputs
-
-    # # TODO Define the dialog for your command by adding different inputs to the command.
-
-    # # Create a simple text box input.
-    # inputs.addTextBoxCommandInput('text_box', 'Some Text', 'Enter some text.', 1, False)
-
-    # # Create a value input field and set the default using 1 unit of the default length unit.
-    # defaultLengthUnits = app.activeProduct.unitsManager.defaultLengthUnits
-    # default_value = adsk.core.ValueInput.createByString('1')
-    # inputs.addValueInput('value_input', 'Some Value', defaultLengthUnits, default_value)
 
     # TODO Connect to the events that are needed by this command.
     futil.add_handler(args.command.execute, command_execute, local_handlers=local_handlers)
     futil.add_handler(args.command.inputChanged, command_input_changed, local_handlers=local_handlers)
-    # futil.add_handler(args.command.executePreview, command_preview, local_handlers=local_handlers)
-    # futil.add_handler(args.command.validateInputs, command_validate_input, local_handlers=local_handlers)
     futil.add_handler(args.command.destroy, command_destroy, local_handlers=local_handlers)
-
 
 # This event handler is called when the user clicks the OK button in the command dialog or 
 # is immediately called after the created event not command inputs were created for the dialog.
@@ -140,30 +131,168 @@ def command_execute(args: adsk.core.CommandEventArgs):
     # General logging for debug.
     futil.log(f'{CMD_NAME} Command Execute Event')
 
-    # # get the command inputs value
-    # inputs = args.command.commandInputs
-    # sdf_input: adsk.core.DropDownCommandInput = inputs.itemById("robot_description_format")
-    # sim_env_input: adsk.core.DropDownCommandInput = inputs.itemById("simulation_env")
-    # name_input: adsk.core.StringValueCommandInput = inputs.itemById("SDF_Author_name")
-    # text_input: adsk.core.TextBoxCommandInput = inputs.itemById("SDF_Description")
-    # constants.set_rdf(sdf_input.selectedItem.name)
-    # constants.set_sim_env(sim_env_input.selectedItem.name)
-    # constants.set_author_name(name_input.value)
-    # constants.set_model_description(text_input.text)
 
+    # Get the command inputs value
+    inputs = args.command.commandInputs
+    modification_code: adsk.core.TextBoxCommandInput = inputs.itemById("modification_code")
+	
+    # Save the modification code to the file
+    save_modification_code(modification_code.text)
+
+    # Set it in constants for further processing
+    constants.MODIFICATION_CODE = modification_code.text
+    
+
+    futil.log(f"Received modification code:\n {constants.MODIFICATION_CODE}")
+
+    # Run the core function
     acdc4robot.run()
-    # TODO ******************************** Your code here ********************************
 
-    # Get a reference to your command's inputs.
-    # inputs = args.command.commandInputs
-    # text_box: adsk.core.TextBoxCommandInput = inputs.itemById('text_box')
-    # value_input: adsk.core.ValueCommandInput = inputs.itemById('value_input')
 
-    # # Do something interesting
-    # text = text_box.text
-    # expression = value_input.expression
-    # msg = f'Your text: {text}<br>Your value: {expression}'
-    # ui.messageBox(msg)
+
+# # Function that is called when a user clicks the corresponding button in the UI.
+# # This defines the contents of the command dialog and connects to the command related events.
+# def command_created(args: adsk.core.CommandCreatedEventArgs):
+#     # General logging for debug.
+#     futil.log(f'{CMD_NAME} Command Created Event')
+
+#     # create command inputs for model.config
+#     inputs = args.command.commandInputs
+
+#     # Add a description field to instruct the user.
+#     instruction_text = (
+#         "Welcome to fork of ACDC4Robot for building drones!\n"
+#         "This tool allows you to export your Autodesk Fusion 360 design model to a xacro file for Gazebo physics simulator.\n"
+#         "Except of creating the links and joints, it also has a feature of adding necessary plugins\n"
+#         "The path to the mesh folder of the stl files should be configured by the xacro:property mesh_folder_path.\n"
+#     )
+#     inputs.addTextBoxCommandInput("instruction_text", "Instructions", instruction_text, 4, True)
+
+#     # Add a text box input for IMU coordinates
+#     imu_input_text = (
+#         "imu coordinate x:\n"
+#         "imu coordinate y:\n"
+#         "imu coordinate z:"
+#     )
+#     inputs.addTextBoxCommandInput("imu_coordinates", "IMU Coordinates", imu_input_text, 3, False)
+
+#     # TODO Connect to the events that are needed by this command.
+#     futil.add_handler(args.command.execute, command_execute, local_handlers=local_handlers)
+#     futil.add_handler(args.command.inputChanged, command_input_changed, local_handlers=local_handlers)
+#     futil.add_handler(args.command.destroy, command_destroy, local_handlers=local_handlers)
+
+# # This event handler is called when the user clicks the OK button in the command dialog or 
+# # is immediately called after the created event not command inputs were created for the dialog.
+# def command_execute(args: adsk.core.CommandEventArgs):
+#     # General logging for debug.
+#     futil.log(f'{CMD_NAME} Command Execute Event')
+
+#     # Get the command inputs value
+#     inputs = args.command.commandInputs
+#     imu_input: adsk.core.TextBoxCommandInput = inputs.itemById("imu_coordinates")
+
+#     # Log or process the IMU coordinates text
+#     imu_text = imu_input.text
+#     futil.log(f"Received IMU Coordinates:\n{imu_text}")
+
+#     # TODO Process the IMU coordinates as needed
+
+#     acdc4robot.run()
+
+
+# # Function that is called when a user clicks the corresponding button in the UI.
+# # This defines the contents of the command dialog and connects to the command related events.
+# def command_created(args: adsk.core.CommandCreatedEventArgs):
+#     # General logging for debug.
+#     futil.log(f'{CMD_NAME} Command Created Event')
+
+#     # create command inputs for model.config
+#     inputs = args.command.commandInputs
+
+#     # Add a description field to instruct the user.
+#     instruction_text = (
+#         "Welcome to fork of ACDC4Robot for building drones!\n"
+#         "This tool allows you to export your Autodesk Fusion 360 design model to a xacro file for Gazebo physics simulator.\n"
+#         "Except of creating the links and joints, it also has a feature of adding neccessary plugins\n"
+#         "The path to the mesh folder of the stl files should be configured by the xacro:property mesh_folder_path.\n"
+#     )
+#     inputs.addTextBoxCommandInput("instruction_text", "Instructions", instruction_text, 4, True)
+
+
+#     # # create a drop down command input to choose robot description format
+#     # rdf_input = inputs.addDropDownCommandInput("robot_description_format", "Robot Description Format", adsk.core.DropDownStyles.LabeledIconDropDownStyle)
+#     # rdf_items = rdf_input.listItems
+#     # rdf_items.add("None", True)
+#     # rdf_items.add("URDF", False)
+#     # rdf_items.add("SDFormat", False)
+#     # rdf_items.add("MJCF", False)
+
+#     # # create a drop down command input to choose simulation environment
+#     # sim_env_input = inputs.addDropDownCommandInput("simulation_env", "Simulation Environment", adsk.core.DropDownStyles.LabeledIconDropDownStyle)
+#     # sim_env_items = sim_env_input.listItems
+#     # sim_env_items.add("None", True)
+#     # sim_env_items.add("Gazebo", False)
+#     # sim_env_items.add("PyBullet", False)
+#     # sim_env_items.add("MuJoCo", False)
+#     # sim_env_input.isVisible = False
+
+#     # # create string value input for sdf info
+#     # sdf_author_input = inputs.addStringValueInput("SDF_Author_name", "Author Name", "ACDC4Robot")
+#     # sdf_author_input.isVisible = False
+#     # sdf_description_input = inputs.addTextBoxCommandInput("SDF_Description", "Description", "Description about the robot model", 3, False)
+#     # sdf_description_input.isVisible = False
+
+#     # # https://help.autodesk.com/view/fusion360/ENU/?contextId=CommandInputs
+#     # inputs = args.command.commandInputs
+
+#     # # TODO Define the dialog for your command by adding different inputs to the command.
+
+#     # # Create a simple text box input.
+#     # inputs.addTextBoxCommandInput('text_box', 'Some Text', 'Enter some text.', 1, False)
+
+#     # # Create a value input field and set the default using 1 unit of the default length unit.
+#     # defaultLengthUnits = app.activeProduct.unitsManager.defaultLengthUnits
+#     # default_value = adsk.core.ValueInput.createByString('1')
+#     # inputs.addValueInput('value_input', 'Some Value', defaultLengthUnits, default_value)
+
+#     # TODO Connect to the events that are needed by this command.
+#     futil.add_handler(args.command.execute, command_execute, local_handlers=local_handlers)
+#     futil.add_handler(args.command.inputChanged, command_input_changed, local_handlers=local_handlers)
+#     # futil.add_handler(args.command.executePreview, command_preview, local_handlers=local_handlers)
+#     # futil.add_handler(args.command.validateInputs, command_validate_input, local_handlers=local_handlers)
+#     futil.add_handler(args.command.destroy, command_destroy, local_handlers=local_handlers)
+
+
+# # This event handler is called when the user clicks the OK button in the command dialog or 
+# # is immediately called after the created event not command inputs were created for the dialog.
+# def command_execute(args: adsk.core.CommandEventArgs):
+#     # General logging for debug.
+#     futil.log(f'{CMD_NAME} Command Execute Event')
+
+#     # # get the command inputs value
+#     # inputs = args.command.commandInputs
+#     # sdf_input: adsk.core.DropDownCommandInput = inputs.itemById("robot_description_format")
+#     # sim_env_input: adsk.core.DropDownCommandInput = inputs.itemById("simulation_env")
+#     # name_input: adsk.core.StringValueCommandInput = inputs.itemById("SDF_Author_name")
+#     # text_input: adsk.core.TextBoxCommandInput = inputs.itemById("SDF_Description")
+#     # constants.set_rdf(sdf_input.selectedItem.name)
+#     # constants.set_sim_env(sim_env_input.selectedItem.name)
+#     # constants.set_author_name(name_input.value)
+#     # constants.set_model_description(text_input.text)
+
+#     acdc4robot.run()
+#     # TODO ******************************** Your code here ********************************
+
+#     # Get a reference to your command's inputs.
+#     # inputs = args.command.commandInputs
+#     # text_box: adsk.core.TextBoxCommandInput = inputs.itemById('text_box')
+#     # value_input: adsk.core.ValueCommandInput = inputs.itemById('value_input')
+
+#     # # Do something interesting
+#     # text = text_box.text
+#     # expression = value_input.expression
+#     # msg = f'Your text: {text}<br>Your value: {expression}'
+#     # ui.messageBox(msg)
 
 
 # This event handler is called when the command needs to compute a new preview in the graphics window.

@@ -9,6 +9,8 @@ MODEL_DESCRIPTION = "" # model description in model.config
 ROBOT_DESCRIPTION_FORMAT = "" # robot description format such as urdf, sdf, mjcf, etc.
 SIMULATION_ENVIRONMENT = "" # simulation environment such as Gazebo, PyBullet, MuJoCo, etc.
 
+MODIFICATION_CODE = """"""
+
 def set_sdf_file_dir(sdf_file_dir: str):
     global SDF_FILE_DIR
     SDF_FILE_DIR = sdf_file_dir
