@@ -45,7 +45,9 @@ Export robot description files from Fusion360 design file directly with GUI pane
 ## Installation
 (this is a fork!!!! only manual installation!!!)
 this fork changes:
-- naming of the joint to be ParentName_ChildName_joint from ParentName_JointType_Index
+- naming of the joint to be just as defined in fusion 360 joint
+- only allows xacro file export, no sdf, urdf, MJCF
+- you can add a modification code that will be exec by the python. api is robot_ele and you can use its functions to travel down to its components and modify stuff or add stuff as needed!
 <!--You can install this Add-In form Autodesk Fusion app store or manually.
 
 ### Installation form Autodesk App Store
@@ -113,7 +115,7 @@ Click the add-in icon, then chose the robot description format and targeted simu
 
 ## Tested Examples
 ### Closed Chain Linkages
-- Test a closed loop linkages in Gazebo to show the ability of SDFormat to describe a closed-chain mechanism
+- Test a closed loop linkages in Gazebo to show the ability of ormat to describe a closed-chain mechanism
 ![Test Four Bar Linkages](./pictures/Four-Bar-Linkages-Test.png)
 
 ### Robot Manipulator: UR5e
