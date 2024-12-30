@@ -2,15 +2,14 @@
 comment = Comment("frame_class_type : hexa-x")
 robot_ele.insert(0, comment)
 
-gazebo_ele = Element("gazebo")
-gz_sim_joint_state_publisher_system = SubElement(gazebo_ele, "plugin")
-gz_sim_joint_state_publisher_system.attrib = {"filename": "gz-sim-joint-state-publisher-system", "name": "gz::sim::systems::JointStatePublisher"}
-
-robot_ele.insert(1, gazebo_ele)
-
 # Iterate through all links and print their names
 for link in robot_ele.iter("link"):
     futil.log(link.attrib['name'])
+
+gazebo_ele = Element("gazebo")
+gz_sim_joint_state_publisher_system = SubElement(gazebo_ele, "plugin")
+gz_sim_joint_state_publisher_system.attrib = {"filename": "gz-sim-joint-state-publisher-system", "name": "gz::sim::systems::JointStatePublisher"}
+robot_ele.append(gazebo_ele)
 
 gz_sim_apply_joint_force_system_rotors_list = []
 
