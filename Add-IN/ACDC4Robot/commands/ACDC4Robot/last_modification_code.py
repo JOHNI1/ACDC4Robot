@@ -59,7 +59,7 @@ child_link = SubElement(imu_joint, "child")
 child_link.attrib = {"link": "imu_link"}
 
 origin = SubElement(imu_joint, "origin")
-origin.attrib = {"xyz": "0 0 0", "rpy": "0 0 0"}
+origin.attrib = {"xyz": "0 0 0.7", "rpy": "0 0 0"}
 
 axis = SubElement(imu_joint, "axis")
 axis.attrib = {"xyz": "0 0 1"}
