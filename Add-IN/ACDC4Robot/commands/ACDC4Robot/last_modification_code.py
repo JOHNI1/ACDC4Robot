@@ -1,53 +1,3 @@
-# Add the comment and plugin to the front
-comment = Comment("frame_class_type : hexa-x")
-robot_ele.insert(0, comment)
-
-gazebo_ele = Element("gazebo")
-gz_sim_joint_state_publisher_system = SubElement(gazebo_ele, "plugin")
-gz_sim_joint_state_publisher_system.attrib = {"filename": "gz-sim-joint-state-publisher-system", "name": "gz::sim::systems::JointStatePublisher"}
-
-robot_ele.insert(1, gazebo_ele)
-
-# Iterate through all links and print their names
-for link in robot_ele.iter("link"):
-    futil.log(link.attrib['name'])
-
-gz_sim_apply_joint_force_system_rotors_list = []
-
-# Iterate through all joints
-for joint in robot_ele.iter("joint"):
-    futil.log(joint.attrib['name'])
-    if "spring" in joint.attrib['name']:
-
-        # Add damping and friction for spring joints
-        dynamics = SubElement(joint, "dynamics")
-        dynamics.attrib = {"damping": "10", "friction": "0.0"}
-
-        # Add gazebo reference for the spring joints
-        gazebo_ele = Element("gazebo")
-        gazebo_ele.attrib = {"reference": joint.attrib['name']}
-        spring_stiffness = SubElement(gazebo_ele, "springStiffness")
-        spring_stiffness.text = "500"
-        spring_reference = SubElement(gazebo_ele, "springReference")
-        spring_reference.text = "0"
-        robot_ele.append(gazebo_ele)
-
-    # Collect rotor joints for applying forces later
-    if "rotor" in joint.attrib['name'] and "prop" not in joint.attrib['name']:
-        gz_sim_apply_joint_force_system_rotors_list.append(joint.attrib['name'])
-
-# Add the plugin for applying forces to the rotors
-gazebo_ele = Element("gazebo")
-for joint in gz_sim_apply_joint_force_system_rotors_list:
-    gz_sim_apply_joint_force_system = SubElement(gazebo_ele, "plugin")
-    gz_sim_apply_joint_force_system.attrib = {"filename": "gz-sim-apply-joint-force-system", "name": "gz::sim::systems::ApplyJointForce"}
-    joint_name = SubElement(gz_sim_apply_joint_force_system, "joint_name")
-    joint_name.text = joint
-
-robot_ele.append(gazebo_ele)
-
-# Define IMU and related elements under the existing structure using Element and SubElement
-
 # Create IMU joint element
 imu_joint = Element("joint")
 imu_joint.attrib = {"name": "imu_joint", "type": "revolute"}
@@ -59,7 +9,7 @@ child_link = SubElement(imu_joint, "child")
 child_link.attrib = {"link": "imu_link"}
 
 origin = SubElement(imu_joint, "origin")
-origin.attrib = {"xyz": "0 0 0.7", "rpy": "0 0 0"}
+origin.attrib = {"xyz": "0 0 0", "rpy": "0 0 0"}
 
 axis = SubElement(imu_joint, "axis")
 axis.attrib = {"xyz": "0 0 1"}
@@ -71,10 +21,10 @@ dynamics = SubElement(imu_joint, "dynamics")
 dynamics.attrib = {"damping": "1", "friction": "0"}
 
 # Create IMU Gazebo reference for the joint (without sensor)
-imu_gazebo = Element("gazebo")
-imu_gazebo.attrib = {"reference": "imu_joint"}
+imu_gazebo_joint = Element("gazebo")
+imu_gazebo_joint.attrib = {"reference": "imu_joint"}
 
-physics = SubElement(imu_gazebo, "physics")
+physics = SubElement(imu_gazebo_joint, "physics")
 ode = SubElement(physics, "ode")
 implicit_spring_damper = SubElement(ode, "implicit_spring_damper")
 implicit_spring_damper.text = "1"
@@ -111,11 +61,11 @@ xacro_set_mesh.attrib = {"mesh": "Box", "scale": "0.09 0.09 0.09"}
 imu_visual_origin = SubElement(visual, "origin")
 imu_visual_origin.attrib = {"xyz": "0 0 0", "rpy": "0 0 0"}
 
-# Create IMU Gazebo sensor reference (for imu_link)
-imu_gazebo_sensor = Element("gazebo")
-imu_gazebo_sensor.attrib = {"reference": "imu_link"}
+# Create IMU Gazebo reference for the link (with sensor)
+imu_gazebo_link = Element("gazebo")
+imu_gazebo_link.attrib = {"reference": "imu_link"}
 
-sensor = SubElement(imu_gazebo_sensor, "sensor")
+sensor = SubElement(imu_gazebo_link, "sensor")
 sensor.attrib = {"name": "imu_sensor", "type": "imu"}
 
 pose = SubElement(sensor, "pose")
@@ -130,6 +80,6 @@ update_rate.text = "1000.0"
 
 # Append all elements to robot_ele
 robot_ele.append(imu_joint)  # Joint
-robot_ele.append(imu_gazebo)  # Gazebo reference for the joint (with physics)
+robot_ele.append(imu_gazebo_joint)  # Gazebo reference for the joint (with physics)
 robot_ele.append(imu_link)    # IMU link
-robot_ele.append(imu_gazebo_sensor)  # Gazebo reference for the sensor
+robot_ele.append(imu_gazebo_link)  # Gazebo reference for the sensor
