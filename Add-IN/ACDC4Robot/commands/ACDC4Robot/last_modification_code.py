@@ -140,7 +140,7 @@ child_link = SubElement(imu_joint, "child")
 child_link.attrib = {"link": "imu_link"}
 
 origin = SubElement(imu_joint, "origin")
-origin.attrib = {"xyz": "0 0 0", "rpy": f"0 0 {math.pi/2}"} #rotate +90 degrees in yaw to face north!
+origin.attrib = {"xyz": "0 0 0.7", "rpy": f"0 0 {math.pi/2}"} #rotate +90 degrees in yaw to face north!
 
 axis = SubElement(imu_joint, "axis")
 axis.attrib = {"xyz": "0 0 1"}
@@ -261,11 +261,11 @@ for rotor_joint in rotors_list:
     offset = SubElement(control, "offset")
     offset.text = "0"
 
-    servo_min = SubElement(control, "servo_min")
-    servo_min.text = "0"
+    # servo_min = SubElement(control, "servo_min")
+    # servo_min.text = "1100"
 
-    servo_max = SubElement(control, "servo_max")
-    servo_max.text = "0"
+    # servo_max = SubElement(control, "servo_max")
+    # servo_max.text = "1900"
 
     control_type = SubElement(control, "type")
     control_type.text = "VELOCITY"
