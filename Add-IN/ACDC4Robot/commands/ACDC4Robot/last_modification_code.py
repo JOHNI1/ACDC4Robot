@@ -1,17 +1,92 @@
+import math
+
+#clock wise is negative, counter clock wise is positive
+HEXA_ROTOR_DIRECTIONS = [-1, 1, -1, 1, 1, -1]
+
+#north is positive Y axis. east is positive X axis.
+#default direction of imu is to the positive X axis.
+#therefore to make the default direction of the drone
+#to face north, there is a need to rotate the imu in yaw +90 degrees
+
+
+
 # Add the comment and plugin to the front
 comment = Comment("frame_class_type : hexa-x")
 robot_ele.insert(0, comment)
 
+for property in robot_ele.iter("xacro:property"):
+    if property.attrib['name'] == "mesh_folder_path":
+        property.attrib = {"name": "mesh_folder_path", "value": "package://drone/models/formafat/"}
+
+
+gazebo = Element("gazebo")
+gz_sim_joint_state_publisher_system = SubElement(gazebo, "plugin")
+gz_sim_joint_state_publisher_system.attrib = {"filename": "gz-sim-joint-state-publisher-system", "name": "gz::sim::systems::JointStatePublisher"}
+robot_ele.append(gazebo)
+
+
+
+
+lift_drag_plugins = []
 # Iterate through all links and print their names
 for link in robot_ele.iter("link"):
-    futil.log(link.attrib['name'])
+    if "prop" in link.attrib['name']:
 
-gazebo_ele = Element("gazebo")
-gz_sim_joint_state_publisher_system = SubElement(gazebo_ele, "plugin")
-gz_sim_joint_state_publisher_system.attrib = {"filename": "gz-sim-joint-state-publisher-system", "name": "gz::sim::systems::JointStatePublisher"}
-robot_ele.append(gazebo_ele)
 
-gz_sim_apply_joint_force_system_rotors_list = []
+        #LiftDragPlugin
+        LiftDragPlugin = Element("plugin")
+        LiftDragPlugin.attrib = {"name": "gz-sim-lift-drag-system", "filename": "gz::sim::systems::LiftDrag"}
+
+        a0 = SubElement(LiftDragPlugin, "a0")
+        a0.text = "0.3"
+
+        alpha_stall = SubElement(LiftDragPlugin, "alpha_stall")
+        alpha_stall.text = "1.4"
+
+        cla = SubElement(LiftDragPlugin, "cla")
+        cla.text = "4.3"
+
+        cda = SubElement(LiftDragPlugin, "cda")
+        cda.text = "0.1"
+
+        cma = SubElement(LiftDragPlugin, "cma")
+        cma.text = "0"
+
+        cla_stall = SubElement(LiftDragPlugin, "cla_stall")
+        cla_stall.text = "-0.025"
+
+        cda_stall = SubElement(LiftDragPlugin, "cda_stall")
+        cda_stall.text = "0.0"
+
+        cma_stall = SubElement(LiftDragPlugin, "cma_stall")
+        cma_stall.text = "0.0"
+
+        area = SubElement(LiftDragPlugin, "area")
+        area.text = "0.0152"
+
+        air_density = SubElement(LiftDragPlugin, "air_density")
+        air_density.text = "1.2041"
+
+        cp = SubElement(LiftDragPlugin, "cp")   #0.178
+        cp.text = "0 0 0" #temp
+
+        forward = SubElement(LiftDragPlugin, "forward")
+        forward.text = "0 1 0" #temp
+
+        upward = SubElement(LiftDragPlugin, "upward")
+        upward.text = "0 0 1"
+
+        link_name = SubElement(LiftDragPlugin, "link_name")
+        link_name.text = f"{link.attrib['name']}"
+
+
+
+
+        lift_drag_plugins.append(LiftDragPlugin)
+
+
+
+rotors_list = []
 
 # Iterate through all joints
 for joint in robot_ele.iter("joint"):
@@ -20,30 +95,37 @@ for joint in robot_ele.iter("joint"):
 
         # Add damping and friction for spring joints
         dynamics = SubElement(joint, "dynamics")
-        dynamics.attrib = {"damping": "10", "friction": "0.0"}
+        dynamics.attrib = {"damping": "10", "friction": "0.3"}
 
         # Add gazebo reference for the spring joints
-        gazebo_ele = Element("gazebo")
-        gazebo_ele.attrib = {"reference": joint.attrib['name']}
-        spring_stiffness = SubElement(gazebo_ele, "springStiffness")
+        gazebo = Element("gazebo")
+        gazebo.attrib = {"reference": joint.attrib['name']}
+        spring_stiffness = SubElement(gazebo, "springStiffness")
         spring_stiffness.text = "500"
-        spring_reference = SubElement(gazebo_ele, "springReference")
+        spring_reference = SubElement(gazebo, "springReference")
         spring_reference.text = "0"
-        robot_ele.append(gazebo_ele)
+        robot_ele.append(gazebo)
 
     # Collect rotor joints for applying forces later
     if "rotor" in joint.attrib['name'] and "prop" not in joint.attrib['name']:
-        gz_sim_apply_joint_force_system_rotors_list.append(joint.attrib['name'])
+        rotors_list.append(joint.attrib['name'])
+        dynamics = SubElement(joint, "dynamics")
+        dynamics.attrib = {"damping": "0.01", "friction": "0.03"}
+
+    elif "prop" in joint.attrib['name']:
+        # Add damping and friction for spring joints
+        dynamics = SubElement(joint, "dynamics")
+        dynamics.attrib = {"damping": "0", "friction": "0.1"}
 
 # Add the plugin for applying forces to the rotors
-gazebo_ele = Element("gazebo")
-for joint in gz_sim_apply_joint_force_system_rotors_list:
-    gz_sim_apply_joint_force_system = SubElement(gazebo_ele, "plugin")
+gazebo_elgazeboe = Element("gazebo")
+for rotor_joint in rotors_list:
+    gz_sim_apply_joint_force_system = SubElement(gazebo, "plugin")
     gz_sim_apply_joint_force_system.attrib = {"filename": "gz-sim-apply-joint-force-system", "name": "gz::sim::systems::ApplyJointForce"}
     joint_name = SubElement(gz_sim_apply_joint_force_system, "joint_name")
-    joint_name.text = joint
+    joint_name.text = rotor_joint
 
-robot_ele.append(gazebo_ele)
+robot_ele.append(gazebo)
 
 # Define IMU and related elements under the existing structure using Element and SubElement
 
@@ -58,7 +140,7 @@ child_link = SubElement(imu_joint, "child")
 child_link.attrib = {"link": "imu_link"}
 
 origin = SubElement(imu_joint, "origin")
-origin.attrib = {"xyz": "0 0 0", "rpy": "0 0 0"}
+origin.attrib = {"xyz": "0 0 0", "rpy": f"0 0 {math.pi/2}"} #rotate +90 degrees in yaw to face north!
 
 axis = SubElement(imu_joint, "axis")
 axis.attrib = {"xyz": "0 0 1"}
@@ -102,13 +184,7 @@ inertia.attrib = {
     "izz": "0.00002"
 }
 
-visual = SubElement(imu_link, "visual")
-geometry = SubElement(visual, "geometry")
-xacro_set_mesh = SubElement(geometry, "xacro:set_mesh")
-xacro_set_mesh.attrib = {"mesh": "Box", "scale": "0.09 0.09 0.09"}
 
-imu_visual_origin = SubElement(visual, "origin")
-imu_visual_origin.attrib = {"xyz": "0 0 0", "rpy": "0 0 0"}
 
 # Create IMU Gazebo reference for the link (with sensor)
 imu_gazebo_link = Element("gazebo")
@@ -132,3 +208,97 @@ robot_ele.append(imu_joint)  # Joint
 robot_ele.append(imu_gazebo_joint)  # Gazebo reference for the joint (with physics)
 robot_ele.append(imu_link)    # IMU link
 robot_ele.append(imu_gazebo_link)  # Gazebo reference for the sensor
+
+
+
+# ArdupilotPlugin
+gazebo = Element("gazebo")
+ardupilot_plugin = SubElement(gazebo, "plugin")
+ardupilot_plugin.attrib = {"name": "ArduPilotPlugin", "filename": "ArduPilotPlugin"}
+
+fdm_addr = SubElement(ardupilot_plugin, "fdm_addr")
+fdm_addr.text = "127.0.0.1"
+
+fdm_port_in = SubElement(ardupilot_plugin, "fdm_port_in")
+fdm_port_in.text = "9002"
+
+connectionTimeoutMaxCount = SubElement(ardupilot_plugin, "connectionTimeoutMaxCount")
+connectionTimeoutMaxCount.text = "0"
+
+lock_step = SubElement(ardupilot_plugin, "lock_step")
+lock_step.text = "0"
+
+have_32_channels = SubElement(ardupilot_plugin, "have_32_channels")
+have_32_channels.text = "0"
+
+modelXYZToAirplaneXForwardZDown = SubElement(ardupilot_plugin, "modelXYZToAirplaneXForwardZDown")
+modelXYZToAirplaneXForwardZDown.attrib = {"degrees": "true"}
+modelXYZToAirplaneXForwardZDown.text = "0 0 0 180 0 0"
+
+gazeboXYZToNED = SubElement(ardupilot_plugin, "gazeboXYZToNED")
+gazeboXYZToNED.attrib = {"degrees": "true"}
+gazeboXYZToNED.text = "0 0 0 180 0 90"
+
+imuName = SubElement(ardupilot_plugin, "imuName")
+imuName.text = "imu_link::imu_sensor"
+
+
+
+for rotor_joint in rotors_list:
+    rotor_index = int(rotor_joint.replace("rotor", "").replace("_joint", ""))-1
+    control = SubElement(ardupilot_plugin, "control")
+    control.attrib = {"channel": str(rotor_index)}
+
+    jointName = SubElement(control, "jointName")
+    jointName.text = rotor_joint
+
+    useForce = SubElement(control, "useForce")
+    useForce.text = "1"
+
+    multiplier = SubElement(control, "multiplier")
+    multiplier.text = f"{800*HEXA_ROTOR_DIRECTIONS[rotor_index]}"
+
+    offset = SubElement(control, "offset")
+    offset.text = "0"
+
+    servo_min = SubElement(control, "servo_min")
+    servo_min.text = "0"
+
+    servo_max = SubElement(control, "servo_max")
+    servo_max.text = "0"
+
+    control_type = SubElement(control, "type")
+    control_type.text = "VELOCITY"
+
+    p_gain = SubElement(control, "p_gain")
+    p_gain.text = "0.2"
+
+    i_gain = SubElement(control, "i_gain")
+    i_gain.text = "0"
+
+    d_gain = SubElement(control, "d_gain")
+    d_gain.text = "0"
+
+    i_max = SubElement(control, "i_max")
+    i_max.text = "0"
+
+    i_min = SubElement(control, "i_min")
+    i_min.text = "0"
+
+    cmd_max = SubElement(control, "cmd_max")
+    cmd_max.text = "2.5"
+
+    cmd_min = SubElement(control, "cmd_min")
+    cmd_min.text = "-2.5"
+
+    controlVelocitySlowdownSim = SubElement(control, "controlVelocitySlowdownSim")
+    controlVelocitySlowdownSim.text = "1"
+
+
+for lift_drag_plugin in lift_drag_plugins:
+    gazebo.append(lift_drag_plugin)
+
+
+
+robot_ele.append(gazebo)
+
