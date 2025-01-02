@@ -30,9 +30,12 @@ robot_ele.append(gazebo)
 lift_drag_plugins = []
 # Iterate through all links and print their names
 for link in robot_ele.iter("link"):
+    for visual in link.iter("visual"):
+        material = SubElement(visual, "material")
+        material.attrib = {"name": f"{link.attrib['name']}_material"}
+        color = SubElement(material, "color")
+        color.attrib = {"rgba": "0.1 0.1 0.1 1"}
     if "prop" in link.attrib['name']:
-
-
         #LiftDragPlugin
         LiftDragPlugin = Element("plugin")
         LiftDragPlugin.attrib = {"name": "gz-sim-lift-drag-system", "filename": "gz::sim::systems::LiftDrag"}
@@ -68,13 +71,17 @@ for link in robot_ele.iter("link"):
         air_density.text = "1.2041"
 
         cp = SubElement(LiftDragPlugin, "cp")   #0.178
-        cp.text = "0 0 0" #temp
-
         forward = SubElement(LiftDragPlugin, "forward")
-        forward.text = "0 1 0" #temp
+
+        if "prop1" in link.attrib['name']:
+            cp.text = "-0.178 0 0"
+            forward.text = f"0 {1} 0" #temp
+        elif "prop2" in link.attrib['name']:
+            cp.text = "0.178 0 0"
+            forward.text = f"0 {-1} 0" #temp
 
         upward = SubElement(LiftDragPlugin, "upward")
-        upward.text = "0 0 1"
+        upward.text = "0 0 1" if "prop1" in link.attrib['name'] else "0 0 " #temp
 
         link_name = SubElement(LiftDragPlugin, "link_name")
         link_name.text = f"{link.attrib['name']}"
@@ -90,7 +97,7 @@ rotors_list = []
 
 # Iterate through all joints
 for joint in robot_ele.iter("joint"):
-    futil.log(joint.attrib['name'])
+    # futil.log(joint.attrib['name'])
     if "spring" in joint.attrib['name']:
 
         # Add damping and friction for spring joints
@@ -101,7 +108,7 @@ for joint in robot_ele.iter("joint"):
         gazebo = Element("gazebo")
         gazebo.attrib = {"reference": joint.attrib['name']}
         spring_stiffness = SubElement(gazebo, "springStiffness")
-        spring_stiffness.text = "500"
+        spring_stiffness.text = "3500"
         spring_reference = SubElement(gazebo, "springReference")
         spring_reference.text = "0"
         robot_ele.append(gazebo)
@@ -118,7 +125,7 @@ for joint in robot_ele.iter("joint"):
         dynamics.attrib = {"damping": "0", "friction": "0.1"}
 
 # Add the plugin for applying forces to the rotors
-gazebo_elgazeboe = Element("gazebo")
+gazebo = Element("gazebo")
 for rotor_joint in rotors_list:
     gz_sim_apply_joint_force_system = SubElement(gazebo, "plugin")
     gz_sim_apply_joint_force_system.attrib = {"filename": "gz-sim-apply-joint-force-system", "name": "gz::sim::systems::ApplyJointForce"}
