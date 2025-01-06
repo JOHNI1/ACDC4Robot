@@ -9,7 +9,7 @@ ui = app.userInterface
 
 
 # File to store the last modification code
-LAST_MODIFICATION_CODE_FILE = os.path.join(os.path.dirname(__file__), 'last_modification_code.txt')
+LAST_MODIFICATION_CODE_FILE = os.path.join(os.path.dirname(__file__), 'last_modification_code.py')
 
 
 # Default example code
