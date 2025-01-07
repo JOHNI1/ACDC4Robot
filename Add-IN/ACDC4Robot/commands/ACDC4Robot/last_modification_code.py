@@ -104,6 +104,13 @@ for joint in robot_ele.iter("joint"):
         dynamics = SubElement(joint, "dynamics")
         dynamics.attrib = {"damping": "10", "friction": "0.3"}
 
+        arm_index = int(joint.attrib['name'].replace("_", "").replace("spring", "").replace("joint", ""))-1
+        for origin in joint.iter("origin"):
+            rpy = origin.attrib["rpy"].split()
+            rpy[1] = f"{-1*HEXA_ROTOR_DIRECTIONS[arm_index]*5*math.pi/180}"
+            origin.attrib["rpy"] = f"{rpy[0]} {rpy[1]} {rpy[2]}"
+
+
         # Add gazebo reference for the spring joints
         gazebo = Element("gazebo")
         gazebo.attrib = {"reference": joint.attrib['name']}
