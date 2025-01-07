@@ -38,7 +38,7 @@ for link in robot_ele.iter("link"):
     if "prop" in link.attrib['name']:
         #LiftDragPlugin
         LiftDragPlugin = Element("plugin")
-        LiftDragPlugin.attrib = {"name": "gz-sim-lift-drag-system", "filename": "gz::sim::systems::LiftDrag"}
+        LiftDragPlugin.attrib = {"filename": "gz-sim-lift-drag-system", "name": "gz::sim::systems::LiftDrag"}
 
         a0 = SubElement(LiftDragPlugin, "a0")
         a0.text = "0.3"
@@ -47,13 +47,13 @@ for link in robot_ele.iter("link"):
         alpha_stall.text = "1.4"
 
         cla = SubElement(LiftDragPlugin, "cla")
-        cla.text = "4.3"
+        cla.text = "4.25"
 
         cda = SubElement(LiftDragPlugin, "cda")
-        cda.text = "0.1"
+        cda.text = "0.10"
 
         cma = SubElement(LiftDragPlugin, "cma")
-        cma.text = "0"
+        cma.text = "0.0"
 
         cla_stall = SubElement(LiftDragPlugin, "cla_stall")
         cla_stall.text = "-0.025"
@@ -273,16 +273,16 @@ for rotor_joint in rotors_list:
     useForce.text = "1"
 
     multiplier = SubElement(control, "multiplier")
-    multiplier.text = f"{800*HEXA_ROTOR_DIRECTIONS[rotor_index]}"
+    multiplier.text = f"{838*HEXA_ROTOR_DIRECTIONS[rotor_index]}"
 
     offset = SubElement(control, "offset")
     offset.text = "0"
 
-    # servo_min = SubElement(control, "servo_min")
-    # servo_min.text = "1100"
+    servo_min = SubElement(control, "servo_min")
+    servo_min.text = "1000"
 
-    # servo_max = SubElement(control, "servo_max")
-    # servo_max.text = "1900"
+    servo_max = SubElement(control, "servo_max")
+    servo_max.text = "2000"
 
     control_type = SubElement(control, "type")
     control_type.text = "VELOCITY"
@@ -297,16 +297,16 @@ for rotor_joint in rotors_list:
     d_gain.text = "0"
 
     i_max = SubElement(control, "i_max")
-    i_max.text = "0"
+    i_max.text = "1"
 
     i_min = SubElement(control, "i_min")
-    i_min.text = "0"
+    i_min.text = "-1"
 
     cmd_max = SubElement(control, "cmd_max")
-    cmd_max.text = "2.5"
+    cmd_max.text = "5.0"
 
     cmd_min = SubElement(control, "cmd_min")
-    cmd_min.text = "-2.5"
+    cmd_min.text = "-5.0"
 
     controlVelocitySlowdownSim = SubElement(control, "controlVelocitySlowdownSim")
     controlVelocitySlowdownSim.text = "1"
