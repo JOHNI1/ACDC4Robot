@@ -70,18 +70,21 @@ for link in robot_ele.iter("link"):
         air_density = SubElement(LiftDragPlugin, "air_density")
         air_density.text = "1.2041"
 
-        cp = SubElement(LiftDragPlugin, "cp")   #0.178
+        cp = SubElement(LiftDragPlugin, "cp")   #0.19
         forward = SubElement(LiftDragPlugin, "forward")
 
+        arm_index = int(link.attrib['name'].split("_")[0].replace("arm", ""))-1
+
+
         if "prop1" in link.attrib['name']:
-            cp.text = "-0.178 0 0"
-            forward.text = f"0 {1} 0" #temp
+            cp.text = "0 -0.19 0"
+            forward.text = f"{-1*HEXA_ROTOR_DIRECTIONS[arm_index]} 0 0" #temp
         elif "prop2" in link.attrib['name']:
-            cp.text = "0.178 0 0"
-            forward.text = f"0 {-1} 0" #temp
+            cp.text = "0 0.19 0"
+            forward.text = f"{1*HEXA_ROTOR_DIRECTIONS[arm_index]} 0 0" #temp
 
         upward = SubElement(LiftDragPlugin, "upward")
-        upward.text = "0 0 1" if "prop1" in link.attrib['name'] else "0 0 " #temp
+        upward.text = "0 0 -1"
 
         link_name = SubElement(LiftDragPlugin, "link_name")
         link_name.text = f"{link.attrib['name']}"
