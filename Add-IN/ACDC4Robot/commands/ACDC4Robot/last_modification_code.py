@@ -157,7 +157,8 @@ child_link = SubElement(imu_joint, "child")
 child_link.attrib = {"link": "imu_link"}
 
 origin = SubElement(imu_joint, "origin")
-origin.attrib = {"xyz": "0 0 0.7", "rpy": f"0 0 {math.pi/2}"} #rotate +90 degrees in yaw to face north!
+# origin.attrib = {"xyz": "0 0 0.7", "rpy": f"0 0 {math.pi/2}"} #rotate +90 degrees in yaw to face north!
+origin.attrib = {"xyz": "0 0 0.7", "rpy": f"0 0 0"} #rotate +90 degrees in yaw to face north!
 
 axis = SubElement(imu_joint, "axis")
 axis.attrib = {"xyz": "0 0 1"}
@@ -246,6 +247,7 @@ lock_step = SubElement(ardupilot_plugin, "lock_step")
 lock_step.text = "0"
 
 have_32_channels = SubElement(ardupilot_plugin, "have_32_channels")
+
 have_32_channels.text = "0"
 
 modelXYZToAirplaneXForwardZDown = SubElement(ardupilot_plugin, "modelXYZToAirplaneXForwardZDown")
