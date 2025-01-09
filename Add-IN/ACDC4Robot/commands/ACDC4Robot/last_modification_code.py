@@ -77,14 +77,14 @@ for link in robot_ele.iter("link"):
 
 
         if "prop1" in link.attrib['name']:
-            cp.text = "0 -0.19 0"
+            cp.text = "0 0.19 0"
             forward.text = f"{-1*HEXA_ROTOR_DIRECTIONS[arm_index]} 0 0" #temp
         elif "prop2" in link.attrib['name']:
-            cp.text = "0 0.19 0"
+            cp.text = "0 -0.19 0"
             forward.text = f"{1*HEXA_ROTOR_DIRECTIONS[arm_index]} 0 0" #temp
 
         upward = SubElement(LiftDragPlugin, "upward")
-        upward.text = "0 0 -1"
+        upward.text = "0 0 1"
 
         link_name = SubElement(LiftDragPlugin, "link_name")
         link_name.text = f"{link.attrib['name']}"
@@ -157,8 +157,7 @@ child_link = SubElement(imu_joint, "child")
 child_link.attrib = {"link": "imu_link"}
 
 origin = SubElement(imu_joint, "origin")
-# origin.attrib = {"xyz": "0 0 0.7", "rpy": f"0 0 {math.pi/2}"} #rotate +90 degrees in yaw to face north!
-origin.attrib = {"xyz": "0 0 0.7", "rpy": f"0 0 0"} #rotate +90 degrees in yaw to face north!
+origin.attrib = {"xyz": "0 0 0.7", "rpy": f"0 0 {math.pi/2}"} #rotate +90 degrees in yaw to face forward!
 
 axis = SubElement(imu_joint, "axis")
 axis.attrib = {"xyz": "0 0 1"}
@@ -181,9 +180,6 @@ implicit_spring_damper.text = "1"
 # Create IMU link element
 imu_link = Element("link")
 imu_link.attrib = {"name": "imu_link"}
-
-imu_origin = SubElement(imu_link, "origin")
-imu_origin.attrib = {"xyz": "0 0 0", "rpy": "0 0 0"}
 
 inertial = SubElement(imu_link, "inertial")
 inertial_origin = SubElement(inertial, "origin")
