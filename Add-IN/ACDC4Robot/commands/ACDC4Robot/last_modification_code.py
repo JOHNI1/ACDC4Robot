@@ -7,6 +7,9 @@ HEXA_ROTOR_DIRECTIONS = [-1, 1, -1, 1, 1, -1]
 #default direction of imu is to the positive X axis.
 #therefore to make the default direction of the drone
 #to face north, there is a need to rotate the imu in yaw +90 degrees
+#to face east, there is a need to rotate the imu in yaw +0 degrees
+#to face south, there is a need to rotate the imu in yaw -90 degrees
+#to face west, there is a need to rotate the imu in yaw +180 degrees
 
 
 
@@ -157,7 +160,7 @@ child_link = SubElement(imu_joint, "child")
 child_link.attrib = {"link": "imu_link"}
 
 origin = SubElement(imu_joint, "origin")
-origin.attrib = {"xyz": "0 0 0.7", "rpy": f"0 0 {math.pi/2}"} #rotate +90 degrees in yaw to face forward!
+origin.attrib = {"xyz": "0 0 0.7", "rpy": f"0 0 -{math.pi/2}"} #rotate -90 degrees in yaw to face south which is the forward direction of the drone!
 
 axis = SubElement(imu_joint, "axis")
 axis.attrib = {"xyz": "0 0 1"}
