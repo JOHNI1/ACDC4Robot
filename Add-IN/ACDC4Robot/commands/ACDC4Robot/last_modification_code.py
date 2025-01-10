@@ -160,7 +160,7 @@ child_link = SubElement(imu_joint, "child")
 child_link.attrib = {"link": "imu_link"}
 
 origin = SubElement(imu_joint, "origin")
-origin.attrib = {"xyz": "0 0 0.7", "rpy": f"0 0 -{math.pi/2}"} #rotate -90 degrees in yaw to face south which is the forward direction of the drone!
+origin.attrib = {"xyz": "0 0 0.7", "rpy": f"0 0 {math.pi/2}"} #rotate +90 degrees in yaw to face north which is the forward direction of the drone!
 
 axis = SubElement(imu_joint, "axis")
 axis.attrib = {"xyz": "0 0 1"}
@@ -319,4 +319,3 @@ for lift_drag_plugin in lift_drag_plugins:
 
 
 robot_ele.append(gazebo)
-
