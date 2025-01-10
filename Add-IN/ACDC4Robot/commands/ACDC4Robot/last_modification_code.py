@@ -19,7 +19,7 @@ robot_ele.insert(0, comment)
 
 for property in robot_ele.iter("xacro:property"):
     if property.attrib['name'] == "mesh_folder_path":
-        property.attrib = {"name": "mesh_folder_path", "value": "package://drone/models/formafat/"}
+        property.attrib = {"name": "mesh_folder_path", "value": f"package://drone/models/{robot_ele.attrib['name']}/"}
 
 
 gazebo = Element("gazebo")
