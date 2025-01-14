@@ -274,7 +274,7 @@ for rotor_joint in rotors_list:
     useForce.text = "1"
 
     multiplier = SubElement(control, "multiplier")
-    multiplier.text = f"{838*HEXA_ROTOR_DIRECTIONS[rotor_index]}"
+    multiplier.text = f"{490*HEXA_ROTOR_DIRECTIONS[rotor_index]}"
 
     offset = SubElement(control, "offset")
     offset.text = "0"
@@ -283,7 +283,7 @@ for rotor_joint in rotors_list:
     servo_min.text = "1000"
 
     servo_max = SubElement(control, "servo_max")
-    servo_max.text = "2000"
+    servo_max.text = "1950"
 
     control_type = SubElement(control, "type")
     control_type.text = "VELOCITY"
@@ -304,10 +304,10 @@ for rotor_joint in rotors_list:
     i_min.text = "-1"
 
     cmd_max = SubElement(control, "cmd_max")
-    cmd_max.text = "5.0"
+    cmd_max.text = "2.5"
 
     cmd_min = SubElement(control, "cmd_min")
-    cmd_min.text = "-5.0"
+    cmd_min.text = "-2.5"
 
     controlVelocitySlowdownSim = SubElement(control, "controlVelocitySlowdownSim")
     controlVelocitySlowdownSim.text = "1"
